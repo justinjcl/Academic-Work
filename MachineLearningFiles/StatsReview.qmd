@@ -1,0 +1,173 @@
+---
+title: "Stats Review - Stat 452"
+author: "Justin Cornejo Leon"
+format: 
+  html:
+    self-contained: TRUE
+---
+
+```{r message=FALSE}
+library(tidyverse)
+library(AmesHousing)
+ames <- make_ames()
+```
+
+## Exercise 1
+
+### a
+
+```{r}
+ggplot(ames, aes(x = Gr_Liv_Area, y = Sale_Price / 1000)) + geom_point(size = 0.5) + labs(x = "Living area", y = "Sale Price")
+```
+
+The variables Living area and Sale price have a positive relationship according to the graph. As the living area increases, we can see that sale price is also increasing which makes sense in this situation. We do have some outliers but the data seems concentrated for the most part before it fans out.
+
+### b
+
+```{r}
+ggplot(ames, aes(x = factor(Overall_Cond))) + geom_bar(fill = "skyblue") +  xlab("Overall Condition") +  ylab("Frequency") + ggtitle("Distribution of Overall Condition") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+This bar graph shoes the frequency of the the conditions of the house in the market. We can see that average has a higher frequency than any other category with above average coming in second. The graph shows us a good amount of the homes are either average or above.
+
+```{r}
+ggplot(ames, aes(x = Overall_Cond, y = Sale_Price / 1000)) + geom_boxplot() + xlab("Overall Condition") + ylab("Sale Price (thousands)") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+In the box plot above, we notice right away that we have a great number of outliers within the categories to the right of average. This could be due to other variables but the sale prices seems higher for those homes with average or above condition. The box plots are also skewed negativetely for those houses above average which means there are more values on the lower end of the scale.
+
+### c
+
+```{r}
+options(scipen = 999)
+lm1 <- lm(Sale_Price ~ Overall_Cond + Gr_Liv_Area, data = ames)
+summary(lm1)
+
+```
+
+The reference category for Overall_Cond is "Very Poor".
+
+Statistically significant: We define a significant variable as a variable with a p-value of less than 0.05. In this case all of the variables are statistically significant.
+
+### d
+
+Interpret Gr_Liv_Area Coefficient: This coefficient represents the change in the predicted sale price for each one-unit increase in the Gr_Liv_Area.
+
+Interpret dummy variable: In this case, the dummy variable tells us the difference between a house categorized as good and those that aren't meaning a good house could be \$104,000 more expensive than not "good "houses or worse.
+
+### e
+
+Interpret R^2^ : The R^2^ is 0.5617, which tells us that approximately 56.17% of the variability in sale prices is explained by the independent variables included in the model.
+
+### f
+
+```{r}
+
+new_x <- data.frame(Gr_Liv_Area = 1500, Overall_Cond = "Good")
+predict(lm1, newdata = new_x)
+```
+
+# Exercise 2
+
+### a
+
+```{r}
+set.seed(452)
+x <- rnorm(100, mean = 0, sd = 1)
+head(x)
+
+```
+
+### b
+
+```{r}
+set.seed(452)
+eps <- rnorm(100, mean = 0, sd = 0.5)
+head(eps)
+```
+
+### c
+
+```{r}
+set.seed(452)
+x <- rnorm(100, mean = 0, sd = 1)
+eps <- rnorm(100, mean = 0, sd = 0.5)
+
+y <- -1 + 0.5 * x + eps
+
+length_y <- length(y)
+beta0 <- -1
+beta1 <- 0.5
+
+print(length_y)
+print(paste("beta0 =", beta0))
+print(paste("beta1 =", beta1))
+```
+
+### d
+
+```{r}
+set.seed(452)
+x <- rnorm(100, mean = 0, sd = 1)
+eps <- rnorm(100, mean = 0, sd = 0.5)
+
+y <- -1 + 0.5 * x + eps
+plot(x, y, main = "x and y", xlab = "x", ylab = "y")
+
+```
+
+### e
+
+```{r}
+model <- lm(y ~ x)
+
+beta_hat_0 <- coef(model)[1]
+beta_hat_1 <- coef(model)[2]
+beta_0 <- -1
+beta_1 <- 0.5
+
+print(paste("Estimated beta_0:", beta_hat_0))
+print(paste("Estimated beta_1:", beta_hat_1))
+print(paste("True beta_0:", beta_0))
+print(paste("True beta_1:", beta_1))
+```
+
+### f
+
+```{r}
+model <- lm(y ~ x)
+
+beta_hat_0 <- coef(model)[1]  
+beta_hat_1 <- coef(model)[2]  
+
+x_values <- seq(min(x), max(x), length.out = 100)
+
+y_values_population <- -1 + 0.5 * x_values
+plot(x, y, main = "Scatter Plot", xlab = "x", ylab = "y")
+
+abline(model, col = "blue")
+lines(x_values, y_values_population, col = "green", lty = 2)
+
+```
+
+The lines have the same shape and are going in the same direction. This tells us that we have a good estimate in terms of the least square method when it comes to looking at the relationship between x and y.
+
+### g
+
+```{r}
+model <- lm(y ~ x)
+
+conf_intervals <- confint(model)
+
+ci_beta0 <- conf_intervals[1, ]
+ci_beta1 <- conf_intervals[2, ]
+
+
+print("95% Confidence:")
+print(paste("beta0:", paste(ci_beta0, collapse = " - ")))
+print(paste("beta1:", paste(ci_beta1, collapse = " - ")))
+```
+
+According to the output , we can see that the confidence intervals contain the true values

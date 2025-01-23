@@ -1,0 +1,73 @@
+---
+title: "Regression Practice - Stat 452"
+author: "Justin Cornejo Leon"
+format: 
+  html:
+    self-contained: TRUE
+---
+
+## Exercise 1
+
+### a
+
+Regression, Inference, n = 500, p = 3
+
+This scenario which involves a set of data on the top 500 firms in the US is a regression problem. We primarily have the tools to create a quantitative response as we have the number of profit, number of employees, industry and the CEO salary which points us toward a regression problem. We are interested in an inference for this scenario as we want to know what factors whether it be profit, number of employees or industry affect the CEO salary.
+
+## b
+
+Classification, Prediction, n = 20, p = 13
+
+I would set this scenario as a classification problem as one of our outcomes is success or failure although we could attribute a 1 or 0 to these responses. In terms of whether this problem is a prediction or inference, I would say we are looking at a prediction problem. We do not know whether the new product will be a success or failure with the aid of past products.
+
+## c
+
+Regression, Prediction, n = 52, p = 3
+
+In this scenario we are collecting data in terms of percent which in other words, we are collecting quantitative data. This makes this scenarrio a regression problem. We are told the main interest is predicting the change between the exchange rate and the world stock markets so that would make this scenario a prediction problem. 
+
+## Exercise 2
+
+## a
+
+```{r message=FALSE}
+library(tidyverse)
+library(AmesHousing)
+ames <- make_ames()
+```
+
+```{r}
+ggplot(ames, aes(x = TotRms_AbvGrd, y = Sale_Price / 1000)) + geom_point(size = 0.5, alpha = 0.5) + geom_smooth(method = "lm", se = FALSE) + labs(x = "Total Rooms", y = "Sale Price")
+```
+
+## b
+
+```{r}
+lm1 <- lm(Sale_Price ~ TotRms_AbvGrd, data = ames)
+summary(lm1)
+```
+
+## c
+
+Interpret Slope: The slope for this model where we are looking at the relationship between total rooms above ground and sales price is 25,163.8. This means that for each input, we receive an output of 25,163.8.
+
+Interpret Coefficient: As for the coefficient of determination, we can see that the model gives us an $R^2$ of 0.2455. This tells us 24.55% of the variability is given by the dependent variable or total sales in this case.
+
+## d
+
+```{r}
+confidence_interval <- confint(lm1)
+print(confidence_interval)
+```
+
+The 95% confidence interval for β1 is \[8063.487, 29267.32\]. Generally, the confidence interval tells us the value which we are most likely to see 95% of the time. In this data set, the lower bound is 8,063.487 and the upper bound is 29,267.32 meaning we will see the values somewhere in between these two values.
+
+## e
+
+```{r}
+new_x <- data.frame(TotRms_AbvGrd = 8)
+predict(lm1, newdata = new_x)
+
+```
+
+The total sale price of a house with 8 rooms above ground is about 219976.1.

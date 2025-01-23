@@ -1,0 +1,86 @@
+---
+title: "Homework 5"
+author: "Justin Cornejo Leon"
+format: 
+  html:
+    self-contained: TRUE
+---
+
+### Exercise 1
+
+Predictor variables are usually standardized prior to applying the kNN because the distance formula it uses is affected by the scaling of the variables. We can use min-max as well as z-score to standardize our values in the data set. Min-max transforms the variable to fit it between 0 and 1.Z-score transforms each value to have a mean of 0 and a standard deviation of 1. Their respective formulas are as follows:
+
+$$
+min-max: x'_i = \frac{x_i - \text{min}(x)}{\text{max}(x) - \text{min}(x)} 
+$$
+
+$$
+z-score:  z_i = \frac{x_i - \text{mean}(x)}{\text{std}(x)} 
+$$
+
+### Exercise 2
+
+### a
+
+```{r}
+library(palmerpenguins)
+library(tidyverse)
+library(class)
+```
+
+```{r}
+ggplot(penguins, aes(x = bill_length_mm , y = body_mass_g , color = species)) +
+  geom_point()
+```
+
+### b
+
+```{r}
+set.seed(123)
+standardize <- function(x) {
+(x - min(x)) / (max(x) - min(x))
+}
+penguins2 <- penguins |>
+select(species, bill_length_mm, body_mass_g) |> drop_na() |>
+mutate(bill_length = standardize(bill_length_mm)) |> mutate(body_mass = standardize(body_mass_g)) |> select(-bill_length_mm, -body_mass_g)
+```
+
+### c
+
+```{r}
+set.seed(123)
+n <- nrow(penguins2)
+train_index <- sample(1:n, round(0.7*n))
+X_train <- penguins2[train_index, 2:3]
+X_test <- penguins2[-train_index, 2:3]
+y_train <- penguins2$species[train_index]
+y_test <- penguins2$species[-train_index]
+
+```
+
+### d
+
+```{r}
+knn1_pred <- knn(X_train, X_test, y_train, k=1)
+cm <- table(predicted = knn1_pred, actual = y_test)
+addmargins(cm)
+```
+
+```{r}
+(45 + 17 + 33) / 103
+```
+
+```{r}
+knn5_pred <- knn(X_train, X_test, y_train, k=5)
+cm <- table(predicted = knn5_pred, actual = y_test)
+addmargins(cm)
+
+```
+
+```{r}
+(46 + 17 + 33) / 103
+```
+
+## e
+
+When comparing k = 1 and k =5 we can see k=5 is more accurate with 93.2% compared to 92.2% although both are very close.
