@@ -1,0 +1,130 @@
+---
+title: "NHANES Practice - Stat 452"
+author: "Justin Cornejo Leon"
+format: 
+  html:
+    self-contained: TRUE
+---
+
+```{r message = FALSE}
+library(tidyverse)
+library(caret)
+library(AmesHousing)
+ames <- make_ames()
+```
+
+## Exercise 1
+
+### a
+
+```{r}
+set.seed(103)
+n <- nrow(ames)
+train_index <- sample(1:n, round(n * 0.7))
+ames_train <- ames[train_index, ]
+ames_test <- ames[-train_index, ]
+```
+
+### b
+
+```{r}
+model1 <- lm(Sale_Price ~ Gr_Liv_Area + Year_Built, data = ames_train)
+summary(model1)
+```
+
+```{r}
+model2 <- lm(Sale_Price ~ Gr_Liv_Area + Year_Built + TotRms_AbvGrd, data = ames_train)
+summary(model2)
+```
+
+```{r}
+model3 <- lm(Sale_Price ~ Gr_Liv_Area + Year_Built + TotRms_AbvGrd + Bldg_Type, data = ames_train)
+summary(model3)
+```
+
+### c
+
+```{r}
+predictions_model1 <- predict(model1, newdata = ames_test)
+
+predictions_model2 <- predict(model2, newdata = ames_test)
+
+predictions_model3 <- predict(model3, newdata = ames_test)
+
+
+calculate_rmse <- function(predictions, actual) {
+  sqrt(mean((predictions - actual)^2))
+}
+calculate_r_squared <- function(predictions, actual) {
+  1 - sum((actual - predictions)^2) / sum((actual - mean(actual))^2)
+}
+```
+
+```{r}
+rmse_model1 <- calculate_rmse(predictions_model1, ames_test$Sale_Price)
+rmse_model2 <- calculate_rmse(predictions_model2, ames_test$Sale_Price)
+rmse_model3 <- calculate_rmse(predictions_model3, ames_test$Sale_Price)
+```
+
+```{r}
+r_squared_model1 <- calculate_r_squared(predictions_model1, ames_test$Sale_Price)
+r_squared_model2 <- calculate_r_squared(predictions_model2, ames_test$Sale_Price)
+r_squared_model3 <- calculate_r_squared(predictions_model3, ames_test$Sale_Price)
+```
+
+```{r}
+r_squared_model1 <- calculate_r_squared(predictions_model1, ames_test$Sale_Price)
+r_squared_model2 <- calculate_r_squared(predictions_model2, ames_test$Sale_Price)
+r_squared_model3 <- calculate_r_squared(predictions_model3, ames_test$Sale_Price)
+```
+
+```{r}
+cat("Model 1:\n")
+cat("RMSE:", rmse_model1, "\n")
+cat("R-squared:", r_squared_model1, "\n\n")
+
+cat("Model 2:\n")
+cat("RMSE:", rmse_model2, "\n")
+cat("R-squared:", r_squared_model2, "\n\n")
+
+cat("Model 3:\n")
+cat("RMSE:", rmse_model3, "\n")
+cat("R-squared:", r_squared_model3, "\n\n")
+```
+
+Model 3 gives us the lowest RMSE which tells us that it has the closest estimate for the actual sale prices number. In addition to the RMSE, the R-Squared is also the highest of all the models at 0.6761944. The R-Squared tells us that about 67 percent of the variance in the model is given by the variables included in the model.
+
+### d
+
+```{r}
+MAE <- function(y, y_hat) {
+  mean(abs(y - y_hat))
+}
+
+mae_model1 <- MAE(ames_test$Sale_Price, predictions_model1)
+mae_model2 <- MAE(ames_test$Sale_Price, predictions_model2)
+mae_model3 <- MAE(ames_test$Sale_Price, predictions_model3)
+
+cat("Model 1:\n")
+cat("MAE:", mae_model1, "\n\n")
+
+cat("Model 2:\n")
+cat("MAE:", mae_model2, "\n\n")
+
+cat("Model 3:\n")
+cat("MAE:", mae_model3, "\n\n")
+```
+
+Model 3 has the lowest MAE which tells us it has the smallest absolute difference between prediction and actual sale prices. The MAE and RMSE are relatively consistent with each other in Model 3 as they're both the lowest of the models tested.
+
+### e
+
+```{r}
+plot(predictions_model3, ames_test$Sale_Price, 
+     xlab = "Predicted Sale Price", ylab = "Sale Price",
+     main = "Model 3 Predicted vs. Sale Price ",
+     col = "blue", pch = 19)
+    options(scipen = 999)
+abline(a = 0, b = 1, col = "red")
+
+```

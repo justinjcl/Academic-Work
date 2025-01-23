@@ -1,0 +1,194 @@
+---
+title: "Project 2, STAT 452"
+format: 
+  html:
+    self-contained: true
+---
+
+**Due:** Friday, May 3
+
+**Instructions:** This assignment should be completed using Quarto and submitted to Canvas in HTML or PDF format.
+
+```{r, message = FALSE, warning = FALSE}
+# load packages
+library(tidyverse)
+library(rpart) 
+library(ranger) # fast implementation of random forests
+library(caret)
+```
+
+For this project, you will consider the Fashion MNIST data set, which consists of a training set of 60,000 images and a test set of 10,000 images. As the name suggests, this data set is similar in structure to the original MNIST data set (lecture 19), except the images are of different articles of clothing, rather than handwritten digits. The response variable consists of the following 10 categories:
+
+-   0 T-shirt/top
+-   1 Trouser
+-   2 Pullover
+-   3 Dress
+-   4 Coat
+-   5 Sandal
+-   6 Shirt
+-   7 Sneaker
+-   8 Bag
+-   9 Ankle boot
+
+Additional information about the data set is provided on Kaggle:
+
+<https://www.kaggle.com/datasets/zalando-research/fashionmnist>
+
+# Import Data Set
+
+Run the following commands to load the training and test set into R:
+
+```{r, message = FALSE}
+fmnist_train <- read_csv("fashion-mnist_train.csv")
+fmnist_test <- read_csv("fashion-mnist_test.csv")
+```
+
+The data frame `fmnist_train` contains 60,000 rows by 785 columns. Each row is an image, which has $28 \times 28 = 784$ pixels. The first column is the class label (response variable). The remaining 784 columns are the pixels (with the darkness of each pixel represented as a number between 0-255).
+
+```{r}
+dim(fmnist_train)
+table(fmnist_train$label)
+```
+
+The other data frame with the test set images, `fmnist_test`, has similar structure.
+
+```{r}
+dim(fmnist_test)
+table(fmnist_test$label)
+```
+
+# Plotting Images
+
+Run the code below to plot the first 16 images in the training set.
+
+```{r}
+# vector with category names
+class_names <- c("T-shirt/top", "Trouser", "Pullover", "Dress", "Coat", "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot")
+```
+
+```{r}
+par(mfrow = c(4,4)) # make 4 by 4 grid
+par(mar = c(1, 1, 2, 1)) # adjust margins around image
+for(i in 1:16) {
+  img <- as.numeric(fmnist_test[i, -1]) 
+  image(matrix(img, 28, 28)[, 28:1], 
+    col = gray.colors(255, rev = TRUE), xaxt = "n", yaxt = "n", 
+    main = class_names[fmnist_test$label[i] + 1]) # add 1 since labels start at 0
+}
+```
+
+## Question 1
+
+Modify the code above to plot the first 16 images in the **test** set. Make sure to include a title with the category name at the top of each image.
+
+# Decision Tree Model
+
+Run the code below to fit a classification tree model using the training set data (this may take several minutes to run). Make sure to fill in any "blanks" prior to running the code.
+
+```{r}
+tree1 <- rpart(label ~ ., data = fmnist_train, method = "class")
+```
+
+Next, make predictions for the image labels on the test set, and compute the confusion matrix.
+
+```{r}
+pred_tree1 <- predict(tree1, newdata = fmnist_test, type = "class")
+# confusion matrix
+cm <- table(predicted = pred_tree1, actual = fmnist_test$label)
+addmargins(cm)
+```
+
+## Question 2
+
+What is the accuracy (percent of images correctly classified) of the decision tree model on the test set?
+
+```{r}
+(714 + 840 + 598 + 848 + 796 + 712 + 0 + 794 + 758 + 834) / 10000
+```
+
+```{r}
+accuracy <- sum(diag(cm)) / sum(cm)
+print(accuracy)
+
+```
+
+# Random Forest Model
+
+Run the code below to fit a random forest model using the training set data (this may take several minutes to run). Make sure to fill in any "blanks" prior to running the code. Note that we need to set the argument `classification = TRUE` so that the `ranger()` function fits classification trees; otherwise, regression trees would be built, since the response variable is coded using numeric values (0-9).
+
+```{r}
+set.seed(452) # for reproducibility
+rf1 <- ranger(label ~ ., data = fmnist_train, 
+              num.trees = 200, mtry = 28, 
+              classification = TRUE)
+```
+
+Next, make predictions for the image labels on the test set, and compute the confusion matrix.
+
+```{r}
+p1 <- predict(rf1, data = fmnist_test)
+pred_rf1 <- p1$predictions
+```
+
+```{r}
+# confusion matrix
+cm2 <- table(predicted = p1$predictions, actual = fmnist_test$label)
+addmargins(cm)
+```
+
+## Question 3
+
+What is the accuracy (percent of images correctly classified) of the random forest model on the test set? How does this compare with the single decision tree model?
+
+```{r}
+accuracy <- sum(diag(cm2)) / sum(cm2)
+print(accuracy)
+```
+
+The random forest model performed best at classifying images compared to the single decision tree model. The random forest model had a percentage of 88 while the single decision tree had a 68% accuracy.
+
+## Question 4
+
+-   What percent of the "Shirt" images are correctly classified by the random forest model?
+
+    ```{r}
+    615/826
+    ```
+
+    74.45% of shirt images were correctly classified
+
+-   What percent of the "Bag" images are correctly classified by the random forest model?
+
+    ```{r}
+    976/1022
+    ```
+
+95.49% of bags were correctly classified by the random forest model.
+
+## Question 5
+
+Fit another random forest model on the training set, but this time choose different values for `mtry` and `ntree`. How does changing the values of these tuning parameters affect the performance of the random forest classifier on the test set images?
+
+```{r}
+set.seed(123) 
+rf2 <- ranger(label ~ ., data = fmnist_train, 
+              num.trees = 10, mtry = 4, 
+              classification = TRUE)
+```
+
+```{r}
+p2 <- predict(rf2, data = fmnist_test)
+pred_rf2 <- p2$predictions
+```
+
+```{r}
+cm3 <- table(predicted = p2$predictions, actual = fmnist_test$label)
+addmargins(cm)
+```
+
+```{r}
+accuracy <- sum(diag(cm3)) / sum(cm3)
+print(accuracy)
+```
+
+Changing the values for the random forest tree parameters can have different effects depending on how the values change. Increasing `mtry` could lead to a reduction of the data being over fitted as more diverse trees are created. It could also potentially negatively affect the results as bias might be increase if the value is too small. The stability of the model is greatly increase when the `ntree` parameter is increased. If we decrease the number of trees we might not capture complex patters in the data. Overall, we should cross validate to determine the effectiveness of the model and to adjust the parameters between complexity and performance.

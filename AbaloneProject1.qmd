@@ -1,0 +1,164 @@
+---
+title: "Project 1"
+author: "Justin Cornejo Leon"
+format:
+  html: 
+    self-contained: true
+---
+
+```{r, message = FALSE}
+library(tidyverse)
+library(rpart)
+library(randomForest)
+library(vip)
+library(ggplot2)
+```
+
+```{r}
+library(AppliedPredictiveModeling)
+data("abalone")
+```
+
+## Part 1: Exploratory Data Analysis
+
+```{r}
+summary(abalone)
+head(abalone)
+```
+
+ggplot(abalone, aes(x = Diameter, y = Rings) + geom_point(size = 0.5)
+
+```{r}
+ggplot(abalone, aes(x = Diameter, y = Rings)) +
+  geom_point() +
+  labs(x = "Diameter", y = "Rings")
+ggplot(abalone, aes(x = LongestShell, y = Rings)) +
+  geom_point() +
+  labs(x = "Longest Shell ", y = "Rings")
+ggplot(abalone, aes(x = WholeWeight, y = Rings)) +
+  geom_point() +
+  labs(x = "Whole Weight", y = "Rings")
+ggplot(abalone, aes(x = ShuckedWeight, y = Rings)) +
+  geom_point() +
+  labs(x = "Shucked Weight", y = "Rings")
+ggplot(abalone, aes(x = Height, y = Rings)) +
+  geom_point() +
+  labs(x = "Height", y = "Rings")
+ggplot(abalone, aes(x = VisceraWeight, y = Rings)) +
+  geom_point() +
+  labs(x = "Viscera Weight", y = "Rings")
+ggplot(abalone, aes(x = ShellWeight, y = Rings)) +
+  geom_point() +
+  labs(x = "Shell Weight", y = "Rings")
+
+
+```
+
+I first noticed one of the scatter plots is not similar to the others which is the scatterplot for height. The points on this plot seemed to be more condesed with a few outliers. All of the other scatter plots seem to have a pattern with how they spread the data. The grpahs that are related such as weight whether it be viscera, shell, whole, and shucked have the same spread but differ soemwhat. The same could be said for the graphs related to shape.
+
+## Part 2: Cross Validation
+
+### a
+
+```{r}
+set.seed(123) 
+n <- nrow(abalone)
+train_indices <- sample(1:n, floor(0.7 * n), replace = FALSE)  
+
+train_data <- abalone[train_indices, ]
+test_data <- abalone[-train_indices, ]
+
+```
+
+### b
+
+```{r}
+lm1 <- lm(Rings ~ LongestShell + Diameter + Height + WholeWeight + ShuckedWeight + VisceraWeight + ShellWeight,
+               data = train_data)
+summary(lm1)
+```
+
+### c
+
+```{r}
+t1 <- rpart( Rings ~ LongestShell + Diameter + Height + WholeWeight + ShuckedWeight + VisceraWeight + ShellWeight, data = test_data )
+
+par(cex=0.7, xpd=NA)
+plot(t1)
+text(t1, use.n = TRUE, cex = 0.9)
+```
+
+### d
+
+```{r}
+rf_1 <- randomForest(Rings ~ LongestShell + Diameter + Height + WholeWeight + ShuckedWeight + VisceraWeight + ShellWeight, data = train_data)
+
+vip(rf_1, num_features = 7)
+```
+
+### e
+
+```{r}
+RMSE <- function(y, y_hat) {
+  sqrt(mean((y - y_hat)^2))
+}
+```
+
+```{r}
+pred_rf <- predict(rf_1, newdata = test_data)
+tree_predictions <- predict(t1, newdata = test_data)
+pred_lm <- predict(lm1, newdata = test_data)
+```
+
+```{r}
+RMSE(test_data$Rings, pred_rf)
+```
+
+```{r}
+RMSE(test_data$Rings, tree_predictions)
+```
+
+```{r}
+RMSE(test_data$Rings, pred_lm)
+```
+
+The results for the cross validation test are very similar but the random forest prediction seems to have the best results when comparing all three. We want a lower RSME as it can indicate when a model is accurate to the actual results. The model with the worst predictive performannce would be the linear model prediction which means the model might not be as good when it comes to predicting underlying patterns and predictions in the data set.
+
+### f
+
+```{r}
+pred_df <- data.frame(
+  Actual = test_data$Rings,
+  Predicted = pred_rf 
+)
+
+ggplot(pred_df, aes(x = Actual, y = Predicted)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_abline(intercept = 0, slope = 1, color = "red")
+
+```
+
+```{r}
+pred_df <- data.frame(
+  Actual = test_data$Rings,
+  Predicted = pred_lm # makes predictions using OOB data
+)
+
+ggplot(pred_df, aes(x = Actual, y = Predicted)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_abline(intercept = 0, slope = 1, color = "red")
+```
+
+```{r}
+pred_df <- data.frame(
+  Actual = test_data$Rings,
+  Predicted = tree_predictions # makes predictions using OOB data
+)
+
+ggplot(pred_df, aes(x = Actual, y = Predicted)) +
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_abline(intercept = 0, slope = 1, color = "red")
+
+```
+
+The regression tree in this data set stands out compared to the other two. This might be due to how the regression tree formula partitions the data. A regression tree uses different regions to compare the data and this is prevelant especailly in data sets with much more data. This is what I think ultimatley gives the graph a step-like pattern.

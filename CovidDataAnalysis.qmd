@@ -1,0 +1,185 @@
+---
+title: "Covid Data Analyisis - Stat 452"
+author: "Justin Cornejo Leon"
+format: 
+  html: 
+   self-contained: TRUE
+---
+
+## Exercise 1
+
+```{r message=FALSE}
+library(tidyverse)
+library(ggplot2)
+
+```
+
+```{r}
+covid_ca2021<- readRDS(url("https://ericwfox.github.io/data/covid_ca2021.rds"))
+```
+
+### a
+
+```{r}
+ggplot(covid_ca2021, aes(x = date, y = daily_cases)) +
+  geom_point() +  
+  geom_smooth(method = "loess", span = 0.2) +  
+  labs(title = "Daily COVID-19 Cases in California (2021)", x = "Date",y = "Daily Cases")
+
+
+```
+
+### b
+
+```{r}
+ggplot(covid_ca2021, aes(x = date, y = daily_cases)) +
+  geom_point() +  
+  geom_smooth(method = "loess", span = 0.6) +  
+  labs(title = "Daily COVID-19 Cases in California (2021)", x = "Date",y = "Daily Cases")
+```
+
+### c
+
+Changing the span of the regression line gives it a chance to fit the data better. When we have a span of 0.2, the variability of the curve increases as oppose to 0.6 where the line becomes smoother capturing a more generalized fit.
+
+## Exercise 2
+
+```{r}
+nhanes_samp <- readRDS(url("https://ericwfox.github.io/data/nhanes_samp1.rds"))
+```
+
+### a
+
+```{r}
+quadratic_model <- lm(BMI ~ Age + I(Age^2), data = nhanes_samp)
+
+summary(quadratic_model)
+```
+
+$$
+BMI = 15.5593 + 0.6139 \times \text{Age} - 0.0062 \times \text{Age}^2
+$$
+
+The $R^2$ in this quadratic model tells us that the variables we used accounts for 27.22 % of the variability in the model which is relatively low.
+
+### b
+
+```{r}
+nhanes_samp$fitted <- predict(quadratic_model, newdata = nhanes_samp)
+
+ggplot(nhanes_samp, aes(x = Age, y = BMI)) +
+  geom_point() +
+  geom_line(aes(y = fitted), color = "blue") +  
+  labs(title = "Age vs. BMI",
+       x = "Age",
+       y = "BMI")
+```
+
+## c
+
+```{r}
+age_values <- c(20, 40, 60)
+predicted_bmi <- predict(quadratic_model, newdata = data.frame(Age = age_values))
+predicted_bmi
+```
+
+### d
+
+```{r}
+third_degree_model <- lm(BMI ~ poly(Age, 3), data = nhanes_samp)
+
+fourth_degree_model <- lm(BMI ~ poly(Age, 4), data = nhanes_samp)
+
+summary(third_degree_model)
+summary(fourth_degree_model)
+```
+
+The regression model for the third and fourth polynomial are very similar. The R^2^, residual standard error, and p-values are all very similar so I would say the third degree polynomial is the better fit in this case. This is because it's a lot more simple and easier to explain or demonstrate it.
+
+### e
+
+```{r}
+ggplot(nhanes_samp, aes(x = Age, y = BMI)) +
+  geom_point() +  
+  geom_smooth(method = "lm", formula = y ~ poly(x, 3), se = FALSE, color = "red") + 
+  labs(title = " Third-Degree Polynomial Age vs. BMI", x = "Age",y = "BMI")
+```
+
+## Exercise 3
+
+## a
+
+```{r}
+set.seed(123)
+x <- runif(300, 0, 10)
+eps <- rnorm(300, sd = 1.5)
+y <- x + 2*sin(2*x) + 2 + eps
+df <- data.frame(x, y) 
+```
+
+```{r}
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +  
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +  
+  labs(title = "Scatter Plot", x = "x",y = "y")
+```
+
+This model under fits the data as it is a very general fit, not taking into account every data point and is not capturing the relationship adequately enough.
+
+## b
+
+```{r}
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "loess", span = 0.7, color = "blue") +  
+  labs(title = "Scatter Plot (span = 0.7)",
+       x = "x",
+       y = "y")
+```
+
+This curve is still to much of a general fit to be adequate for the data set. It has more curves but still has a high bias.
+
+### c
+
+```{r}
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +  # Scatter plot
+  geom_smooth(method = "loess", span = 0.2, color = "blue") +  
+  labs(title = "Scatter Plot (Span = 0.2)",
+       x = "x",
+       y = "y")
+```
+
+The regression curve in this instance fits the data adequately. As oppose to the other regression curves, this one is not over-generalized and is not too specific. It has balance in both bias and variance.
+
+### d
+
+```{r}
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +  
+  geom_smooth(method = "loess", span = 0.05, color = "blue") +
+  labs(title = "Scatter Plot (span = 0.05)",
+       x = "x",
+       y = "y")
+```
+
+The regression curve in this example over fits the data. The bias might be too low with a high variance making it overly sensitive to the data points. This can also lead to it not visualizing underlying patterns very well.
+
+### Exercise 4
+
+```{r}
+set.seed(123)
+x <- runif(300, 0, 10)
+epsilon <- rnorm(300, mean = 0, sd = 0.25)
+y <- x + 2 * sin(2 * x) + 2 + epsilon
+df <- data.frame(x, y)
+```
+
+```{r}
+library(ggplot2)
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  labs(title = "Scatter Plot of Simulated Data (sd = 0.25)", x = "x",y = "y")
+```
+
+The decreasing standard deviation changes how the scatter plot looks. In this case, we have data points that are less spread out leading to a tighter clustering due to the decrease on variance.
